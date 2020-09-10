@@ -1,0 +1,176 @@
+{
+    "lines": [
+        {
+            "from_obj": 1,
+            "to_obj": 2
+        },
+        {
+            "from_obj": 1,
+            "to_obj": 8
+        },
+        {
+            "from_obj": 1,
+            "to_obj": 9
+        },
+        {
+            "from_obj": 2,
+            "to_obj": 10
+        },
+        {
+            "from_obj": 2,
+            "to_obj": 3
+        },
+        {
+            "from_obj": 3,
+            "to_obj": 10
+        },
+        {
+            "from_obj": 3,
+            "to_obj": 4
+        },
+        {
+            "from_obj": 4,
+            "to_obj": 10
+        },
+        {
+            "from_obj": 4,
+            "to_obj": 5
+        },
+        {
+            "from_obj": 4,
+            "to_obj": 11
+        },
+        {
+            "from_obj": 5,
+            "to_obj": 6
+        },
+        {
+            "from_obj": 6,
+            "to_obj": 11
+        },
+        {
+            "from_obj": 6,
+            "to_obj": 13
+        },
+        {
+            "from_obj": 6,
+            "to_obj": 7
+        },
+        {
+            "from_obj": 7,
+            "to_obj": 13
+        },
+        {
+            "from_obj": 7,
+            "to_obj": 8
+        },
+        {
+            "from_obj": 8,
+            "to_obj": 12
+        },
+        {
+            "from_obj": 8,
+            "to_obj": 9
+        },
+        {
+            "from_obj": 12,
+            "to_obj": 13
+        },
+        {
+            "from_obj": 12,
+            "to_obj": 9
+        },
+        {
+            "from_obj": 12,
+            "to_obj": 10
+        },
+        {
+            "from_obj": 10,
+            "to_obj": 11
+        },
+        {
+            "from_obj": 10,
+            "to_obj": 9
+        }
+    ],
+    "points": [
+        {
+            "lat": 47.225281,
+            "lon": 39.693089,
+            "obj_id": 1,
+            "score": 100
+        },
+        {
+            "lat": 47.231692,
+            "lon": 39.685535,
+            "obj_id": 2,
+            "score": 169
+        },
+        {
+            "lat": 47.241366,
+            "lon": 39.691544,
+            "obj_id": 3,
+            "score": 123
+        },
+        {
+            "lat": 47.246494,
+            "lon": 39.70768,
+            "obj_id": 4,
+            "score": 65
+        },
+        {
+            "lat": 47.249407,
+            "lon": 39.729996,
+            "obj_id": 5,
+            "score": 25
+        },
+        {
+            "lat": 47.244629,
+            "lon": 39.744587,
+            "obj_id": 6,
+            "score": 67
+        },
+        {
+            "lat": 47.238219,
+            "lon": 39.750423,
+            "obj_id": 7,
+            "score": 223
+        },
+        {
+            "lat": 47.231809,
+            "lon": 39.732571,
+            "obj_id": 8,
+            "score": 67
+        },
+        {
+            "lat": 47.233674,
+            "lon": 39.706135,
+            "obj_id": 9,
+            "score": 23
+        },
+        {
+            "lat": 47.236704,
+            "lon": 39.696178,
+            "obj_id": 10,
+            "score": 188
+        },
+        {
+            "lat": 47.240667,
+            "lon": 39.715233,
+            "obj_id": 11,
+            "score": 54
+        },
+        {
+            "lat": 47.235655,
+            "lon": 39.723301,
+            "obj_id": 12,
+            "score": 45
+        },
+        {
+            "lat": 47.237637,
+            "lon": 39.734459,
+            "obj_id": 13,
+            "score": 51
+        }
+    ]
+}
