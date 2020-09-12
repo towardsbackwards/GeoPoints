@@ -1,120 +1,161 @@
 from heapq import heappush, heappop
 from sys import maxsize
-
-
+import collections
+from mainapp.models import Point, Line
 # Represent each node as a list, ordering the elements so that a heap of nodes
 # is ordered by f = g + h, with h as a first, greedy tie-breaker and num as a
 # second, definite tie-breaker. Store the redundant g for fast and accurate
 # calculations.
 
 
+def min_length(_from, _to):
+    depend_nodes = collections.defaultdict(list)
+    for line in Line.objects.all():
+        # формируем словарь узел (int) - связи (list)
+        n_from = line.from_point.id
+        n_to = line.to_point.id
+        depend_nodes[n_from].append(n_to)
+        depend_nodes[n_to].append(n_from)
 
+    def distance_eval(a, b):
+        """Расчет дистанции между a & b в километрах"""
+        return Point.objects.get(id=a).geom.distance(Point.objects.get(id=b).geom) * 100
 
-def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
-          debug=None):
-    F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
-    """Поиск кратчайшего пути от точки до цели.
-    Аргументы:
-      start_pos      - Стартовая точка: int
-      neighbors(pos) - Функция, возвращающая всех соседей точки (pos): function > returns list
-      goal(pos)      - Функция, возвращающая True при достижении цели и False в противном случае
-      start_g        - Начальная стоимость: float
-      cost(a, b)     - Функция, возвращающая стоимость перехода из точки a в точку b: float
-      heuristic(pos) - A function returning an estimate of the total cost
-                       remaining for reaching goal from the given position.
-                       Overestimates can yield suboptimal paths.
-      limit          - Максимальное число позиций для поиска
-      debug(nodes)   - This function will be called with a dictionary of all
-                       nodes.
-    Функция возвращает наиболее короткикй маршрут от точки start_pos до целевой точки, включая стартовую позицию.
-    """
+    def heuristic_eval(pos):
+        """Расчет эвристики конечная точка эвристики - последний узел (собственная длина)"""
+        s_length = len(Point.objects.all())
+        return Point.objects.get(id=pos).geom.distance(Point.objects.get(id=s_length).geom) * 100
 
-    # Создание стартового узла
-    nums = iter(range(maxsize))  # создание итератора для "бесконечного" осуществления следующего шага
-    start_h = heuristic(start_pos)
-    start = [start_g + start_h, start_h, next(nums), start_g, start_pos, True,
-             True, None]
-    # Отслеживание всех просмотренных узлов
-    nodes = {start_pos: start}
+    def goal(pos):
+        """Функция, возвращающая True при достижении цели и False в противном случае"""
+        if pos == _to:
+            return True
+        else:
+            return False
 
-    # Содержанит кучу узлов
-    heap = [start]
+    def neighbors(node):
+        """Функция, возвращающая всех соседей точки (pos): function > returns list"""
+        return depend_nodes[node]
 
-    # Отслеживание лучшего найденного пути
-    best = start
-    # Пока в куче есть узлы
-    while heap:
-        # Берём следующий узел и удаляем его из кучи
-        current = heappop(heap)
-        # Устанавливаем, что соседи узла не раскрыты ???
-        current[OPEN] = False
+    def path_in_km(path_list):
+        distance = 0
+        for i in range(len(path_list)):
+            if len(path[i:i + 2]) == 2:
+                section = path_list[i:i + 2]
+                distance += distance_eval(section[0], section[1])
+        return distance
 
-        # Мы достигли цели?
-        if goal(current[POS]):
-            best = current
-            break
-        # Раскрываем узел, посещая соседские
-        for neighbor_pos in neighbors(current[POS]):
-            neighbor_g = current[G] + cost(current[POS], neighbor_pos)
-            neighbor = nodes.get(neighbor_pos)
-            if neighbor is None:
+    def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
+              debug=None):
+        F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
+        """Поиск кратчайшего пути от точки до цели.
+        Аргументы:
+          start_pos      - Стартовая точка: int
+          neighbors(pos) - Функция, возвращающая всех соседей точки (pos): function > returns list
+          goal(pos)      - Функция, возвращающая True при достижении цели и False в противном случае
+          start_g        - Начальная стоимость: float
+          cost(a, b)     - Функция, возвращающая стоимость перехода из точки a в точку b: float
+          heuristic(pos) - A function returning an estimate of the total cost
+                           remaining for reaching goal from the given position.
+                           Overestimates can yield suboptimal paths.
+          limit          - Максимальное число позиций для поиска
+          debug(nodes)   - This function will be called with a dictionary of all
+                           nodes.
+        Функция возвращает наиболее короткикй маршрут от точки start_pos до целевой точки, включая стартовую позицию.
+        """
 
-                # Limit the search.
-                if len(nodes) >= limit:
-                    continue
+        # Создание стартового узла
+        nums = iter(range(maxsize))  # создание итератора для "бесконечного" осуществления следующего шага
+        start_h = heuristic(start_pos)
+        start = [start_g + start_h, start_h, next(nums), start_g, start_pos, True,
+                 True, None]
+        # Отслеживание всех просмотренных узлов
+        nodes = {start_pos: start}
 
-                # Мы нашли новый узел
-                neighbor_h = heuristic(neighbor_pos)
-                neighbor = [neighbor_g + neighbor_h, neighbor_h, next(nums),
-                            neighbor_g, neighbor_pos, True, True, current[POS]]
-                nodes[neighbor_pos] = neighbor
-                heappush(heap, neighbor)
-                if neighbor_h < best[H]:
-                    # We are approaching the goal.
-                    best = neighbor
+        # Содержанит кучу узлов
+        heap = [start]
 
-            elif neighbor_g < neighbor[G]:
+        # Отслеживание лучшего найденного пути
+        best = start
+        # Пока в куче есть узлы
+        while heap:
+            # Берём следующий узел и удаляем его из кучи
+            current = heappop(heap)
+            # Устанавливаем, что соседи узла не раскрыты ???
+            current[OPEN] = False
 
-                # Мы нашли более выгодный путь к соседней точке
-                if neighbor[OPEN]:
+            # Мы достигли цели?
+            if goal(current[POS]):
+                best = current
+                break
+            # Раскрываем узел, посещая соседские
+            for neighbor_pos in neighbors(current[POS]):
+                neighbor_g = current[G] + cost(current[POS], neighbor_pos)
+                neighbor = nodes.get(neighbor_pos)
+                if neighbor is None:
 
-                    # The neighbor is already open. Finding and updating it
-                    # in the heap would be a linear complexity operation.
-                    # Instead we mark the neighbor as invalid and make an
-                    # updated copy of it.
+                    # Limit the search.
+                    if len(nodes) >= limit:
+                        continue
 
-                    neighbor[VALID] = False
-                    nodes[neighbor_pos] = neighbor = neighbor[:]
-                    neighbor[F] = neighbor_g + neighbor[H]
-                    neighbor[NUM] = next(nums)
-                    neighbor[G] = neighbor_g
-                    neighbor[VALID] = True
-                    neighbor[PARENT] = current[POS]
+                    # Мы нашли новый узел
+                    neighbor_h = heuristic(neighbor_pos)
+                    neighbor = [neighbor_g + neighbor_h, neighbor_h, next(nums),
+                                neighbor_g, neighbor_pos, True, True, current[POS]]
+                    nodes[neighbor_pos] = neighbor
                     heappush(heap, neighbor)
+                    if neighbor_h < best[H]:
+                        # We are approaching the goal.
+                        best = neighbor
 
-                else:
+                elif neighbor_g < neighbor[G]:
 
-                    # Reopen the neighbor.
-                    neighbor[F] = neighbor_g + neighbor[H]
-                    neighbor[G] = neighbor_g
-                    neighbor[PARENT] = current[POS]
-                    neighbor[OPEN] = True
-                    heappush(heap, neighbor)
+                    # Мы нашли более выгодный путь к соседней точке
+                    if neighbor[OPEN]:
 
-        # Discard leading invalid nodes from the heap.
-        while heap and not heap[0][VALID]:
-            heappop(heap)
+                        # The neighbor is already open. Finding and updating it
+                        # in the heap would be a linear complexity operation.
+                        # Instead we mark the neighbor as invalid and make an
+                        # updated copy of it.
 
-    if debug is not None:
-        # Pass the dictionary of nodes to the caller.
-        debug(nodes)
+                        neighbor[VALID] = False
+                        nodes[neighbor_pos] = neighbor = neighbor[:]
+                        neighbor[F] = neighbor_g + neighbor[H]
+                        neighbor[NUM] = next(nums)
+                        neighbor[G] = neighbor_g
+                        neighbor[VALID] = True
+                        neighbor[PARENT] = current[POS]
+                        heappush(heap, neighbor)
 
-    # Return the best path as a list.
-    path = []
-    current = best
-    while current[PARENT] is not None:
-        path.append(current[POS])
-        current = nodes[current[PARENT]]
-    path.append(start_pos)
-    path.reverse()
-    return path
+                    else:
+
+                        # Reopen the neighbor.
+                        neighbor[F] = neighbor_g + neighbor[H]
+                        neighbor[G] = neighbor_g
+                        neighbor[PARENT] = current[POS]
+                        neighbor[OPEN] = True
+                        heappush(heap, neighbor)
+
+            # Discard leading invalid nodes from the heap.
+            while heap and not heap[0][VALID]:
+                heappop(heap)
+
+        if debug is not None:
+            # Pass the dictionary of nodes to the caller.
+            debug(nodes)
+
+        # Return the best path as a list.
+        path = []
+        current = best
+        while current[PARENT] is not None:
+            path.append(current[POS])
+            current = nodes[current[PARENT]]
+        path.append(start_pos)
+        path.reverse()
+        return path
+
+    path = astar(_from, neighbors, goal, 0, distance_eval, heuristic_eval)
+    #  тут вернуть geojson?
+    return f'Кратчайший путь от {_from} до {_to} проходит через ' \
+           f'точки: {path}, общая длина этого пути: {path_in_km(path)} км'
+
