@@ -1,53 +1,32 @@
 from heapq import heappush, heappop
 from sys import maxsize
 
-edges = {1: [2, 8, 9],
-         2: [1, 10, 3],
-         8: [1, 7, 12, 9],
-         9: [1, 8, 12, 10],
-         10: [2, 3, 4, 12, 11, 9],
-         3: [2, 10, 4],
-         4: [3, 10, 5, 11],
-         5: [4, 6],
-         11: [4, 6, 10],
-         6: [5, 11, 13, 7],
-         13: [6, 7, 12],
-         7: [6, 13, 8],
-         12: [8, 13, 9, 10]}
-
-
-def neighbors(node):
-    return edges[node]
-
 
 # Represent each node as a list, ordering the elements so that a heap of nodes
 # is ordered by f = g + h, with h as a first, greedy tie-breaker and num as a
 # second, definite tie-breaker. Store the redundant g for fast and accurate
 # calculations.
 
-F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
+
 
 
 def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
           debug=None):
-    """Find the shortest path from start to goal.
-    Arguments:
-      start_pos      - The starting position.
-      neighbors(pos) - A function returning all neighbor positions of the given
-                       position.
-      goal(pos)      - A function returning true given a goal position, false
-                       otherwise.
-      start_g        - The starting cost.
-      cost(a, b)     - A function returning the cost for moving from one
-                       position to another.
+    F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
+    """Поиск кратчайшего пути от точки до цели.
+    Аргументы:
+      start_pos      - Стартовая точка: int
+      neighbors(pos) - Функция, возвращающая всех соседей точки (pos): function > returns list
+      goal(pos)      - Функция, возвращающая True при достижении цели и False в противном случае
+      start_g        - Начальная стоимость: float
+      cost(a, b)     - Функция, возвращающая стоимость перехода из точки a в точку b: float
       heuristic(pos) - A function returning an estimate of the total cost
                        remaining for reaching goal from the given position.
                        Overestimates can yield suboptimal paths.
-      limit          - The maximum number of positions to search.
+      limit          - Максимальное число позиций для поиска
       debug(nodes)   - This function will be called with a dictionary of all
                        nodes.
-    The function returns the best path found. The returned path excludes the
-    starting position.
+    Функция возвращает наиболее короткикй маршрут от точки start_pos до целевой точки, включая стартовую позицию.
     """
 
     # Создание стартового узла
@@ -84,7 +63,7 @@ def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
                 if len(nodes) >= limit:
                     continue
 
-                # We have found a new node.
+                # Мы нашли новый узел
                 neighbor_h = heuristic(neighbor_pos)
                 neighbor = [neighbor_g + neighbor_h, neighbor_h, next(nums),
                             neighbor_g, neighbor_pos, True, True, current[POS]]
@@ -96,7 +75,7 @@ def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
 
             elif neighbor_g < neighbor[G]:
 
-                # We have found a better path to the neighbor.
+                # Мы нашли более выгодный путь к соседней точке
                 if neighbor[OPEN]:
 
                     # The neighbor is already open. Finding and updating it
