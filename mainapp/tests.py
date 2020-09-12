@@ -2,13 +2,14 @@ from heapq import heappush, heappop
 from sys import maxsize
 import collections
 from mainapp.models import Point, Line
-# Represent each node as a list, ordering the elements so that a heap of nodes
-# is ordered by f = g + h, with h as a first, greedy tie-breaker and num as a
-# second, definite tie-breaker. Store the redundant g for fast and accurate
-# calculations.
+
+F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
 
 
 def min_length(_from, _to):
+    """Функция поиска кратчайшего пути между точками a & b
+    Возвращает список точек (узлов), по которым был составлен маршрут
+    (используя алгоритм A*), и его общую длину"""
     depend_nodes = collections.defaultdict(list)
     for line in Line.objects.all():
         # формируем словарь узел (int) - связи (list)
@@ -26,14 +27,14 @@ def min_length(_from, _to):
         s_length = len(Point.objects.all())
         return Point.objects.get(id=pos).geom.distance(Point.objects.get(id=s_length).geom) * 100
 
-    def goal(pos):
+    def goal_or_not(pos):
         """Функция, возвращающая True при достижении цели и False в противном случае"""
         if pos == _to:
             return True
         else:
             return False
 
-    def neighbors(node):
+    def open_neighbors(node):
         """Функция, возвращающая всех соседей точки (pos): function > returns list"""
         return depend_nodes[node]
 
@@ -47,7 +48,6 @@ def min_length(_from, _to):
 
     def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
               debug=None):
-        F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
         """Поиск кратчайшего пути от точки до цели.
         Аргументы:
           start_pos      - Стартовая точка: int
@@ -59,8 +59,6 @@ def min_length(_from, _to):
                            remaining for reaching goal from the given position.
                            Overestimates can yield suboptimal paths.
           limit          - Максимальное число позиций для поиска
-          debug(nodes)   - This function will be called with a dictionary of all
-                           nodes.
         Функция возвращает наиболее короткикй маршрут от точки start_pos до целевой точки, включая стартовую позицию.
         """
 
@@ -154,8 +152,7 @@ def min_length(_from, _to):
         path.reverse()
         return path
 
-    path = astar(_from, neighbors, goal, 0, distance_eval, heuristic_eval)
+    path = astar(_from, open_neighbors, goal_or_not, 0, distance_eval, heuristic_eval)
     #  тут вернуть geojson?
     return f'Кратчайший путь от {_from} до {_to} проходит через ' \
            f'точки: {path}, общая длина этого пути: {path_in_km(path)} км'
-

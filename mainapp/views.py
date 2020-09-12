@@ -23,19 +23,6 @@ class MinLength(APIView):
         return Response({"points": geojson_answer})
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class MinScore(APIView):
     pass
 
