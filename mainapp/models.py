@@ -17,4 +17,3 @@ class Line(models.Model):
         return f'From {self.from_point.geom} (score={self.from_point.score}) ' \
                f'to {self.to_point.geom} (score={self.to_point.score})'
 
-
