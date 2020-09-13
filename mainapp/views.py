@@ -1,3 +1,4 @@
+import json
 
 from django.db.models import Q
 from rest_framework import generics
@@ -7,7 +8,7 @@ from mainapp.models import Point, Line
 from mainapp.serializers import PointsSerializer
 from django.core.serializers import serialize
 
-from mainapp.tests import min_length
+from mainapp.algorithm import min_length
 
 
 class MinLength(APIView):
@@ -15,12 +16,14 @@ class MinLength(APIView):
     def get(self, request, **kwargs):
         point_from = self.kwargs['from']
         point_to = self.kwargs['to']
-        print(min_length(point_from, point_to))
+        result = min_length(point_from, point_to)
+        print(result)
 
-        geojson_answer = serialize('geojson', Point.objects.filter(Q(id=self.kwargs['from']) | Q(id=self.kwargs['to'])),
-                                   geometry_field='geom',
-                                   fields=('score', 'geom'))
-        return Response({"points": geojson_answer})
+        geojson_answer = json.loads(
+            serialize('geojson', Point.objects.filter(Q(id=self.kwargs['from']) | Q(id=self.kwargs['to'])),
+                      geometry_field='geom',
+                      fields=('score', 'geom')))
+        return Response({"points": geojson_answer, "result": result})
 
 
 class MinScore(APIView):

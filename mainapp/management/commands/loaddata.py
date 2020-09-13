@@ -29,7 +29,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         """Наполняет базу с нуля. Использование:
-        python manage.py fill_db"""
+        python manage.py loaddata"""
         if json_data:
             for point in json_data['points']:
                 new_point = Point(

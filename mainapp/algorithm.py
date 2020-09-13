@@ -6,7 +6,7 @@ from mainapp.models import Point, Line
 F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
 
 
-def min_length(_from, _to):
+def min_length(start_point, end_point):
     """Функция поиска кратчайшего пути между точками a & b
     Возвращает список точек (узлов), по которым был составлен маршрут
     (используя алгоритм A*), и его общую длину"""
@@ -18,27 +18,20 @@ def min_length(_from, _to):
         depend_nodes[n_from].append(n_to)
         depend_nodes[n_to].append(n_from)
 
+    def open_neighbors(node):
+        """Функция, возвращающая всех соседей точки (pos): function > returns list"""
+        return depend_nodes[node]
+
     def distance_eval(a, b):
         """Расчет дистанции между a & b в километрах"""
         return Point.objects.get(id=a).geom.distance(Point.objects.get(id=b).geom) * 100
 
     def heuristic_eval(pos):
-        """Расчет эвристики конечная точка эвристики - последний узел (собственная длина)"""
-        s_length = len(Point.objects.all())
-        return Point.objects.get(id=pos).geom.distance(Point.objects.get(id=s_length).geom) * 100
-
-    def goal_or_not(pos):
-        """Функция, возвращающая True при достижении цели и False в противном случае"""
-        if pos == _to:
-            return True
-        else:
-            return False
-
-    def open_neighbors(node):
-        """Функция, возвращающая всех соседей точки (pos): function > returns list"""
-        return depend_nodes[node]
+        """Расчет эвристики конечная точка эвристики = конечная точка пути"""
+        return Point.objects.get(id=pos).geom.distance(Point.objects.get(id=end_point).geom) * 100
 
     def path_in_km(path_list):
+        """Функция, возвращающая общую длину пути по рассчитаным astar точкам"""
         distance = 0
         for i in range(len(path_list)):
             if len(path[i:i + 2]) == 2:
@@ -46,7 +39,7 @@ def min_length(_from, _to):
                 distance += distance_eval(section[0], section[1])
         return distance
 
-    def astar(start_pos, neighbors, goal, start_g, cost, heuristic, limit=maxsize,
+    def astar(start_pos, neighbors, goal_point, start_g, cost, heuristic, limit=maxsize,
               debug=None):
         """Поиск кратчайшего пути от точки до цели.
         Аргументы:
@@ -83,7 +76,7 @@ def min_length(_from, _to):
             current[OPEN] = False
 
             # Мы достигли цели?
-            if goal(current[POS]):
+            if current[POS] == goal_point:
                 best = current
                 break
             # Раскрываем узел, посещая соседские
@@ -152,7 +145,7 @@ def min_length(_from, _to):
         path.reverse()
         return path
 
-    path = astar(_from, open_neighbors, goal_or_not, 0, distance_eval, heuristic_eval)
-    #  тут вернуть geojson?
-    return f'Кратчайший путь от {_from} до {_to} проходит через ' \
+    path = astar(start_point, open_neighbors, end_point, 0, distance_eval, heuristic_eval)
+    # geojson?
+    return f'Кратчайший путь от {start_point} до {end_point} проходит через ' \
            f'точки: {path}, общая длина этого пути: {path_in_km(path)} км'
