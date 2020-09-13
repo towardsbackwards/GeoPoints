@@ -1,17 +1,22 @@
 from heapq import heappush, heappop
 from sys import maxsize
 import collections
-from mainapp.models import Point, Line
 
+# инициализация ключей с условными значениями
 F, H, NUM, G, POS, OPEN, VALID, PARENT = range(8)
 
 
-def min_length(start_point, end_point):
+def min_length(start_point, end_point, line_model, point_model):
     """Функция поиска кратчайшего пути между точками a & b
     Возвращает список точек (узлов), по которым был составлен маршрут
-    (используя алгоритм A*), и его общую длину"""
+    (используя алгоритм A*), и его общую длину
+    Аргументы:
+            start_point     - id стартовой точки (int)
+            end_point       - id конечной точки (int)
+            point_model     - Django-модель точки
+            point_model     - Django-модель линии (с FK к point model - from_point & to_point)"""
     depend_nodes = collections.defaultdict(list)
-    for line in Line.objects.all():
+    for line in line_model.objects.all():
         # формируем словарь узел (int) - связи (list)
         n_from = line.from_point.id
         n_to = line.to_point.id
@@ -24,35 +29,35 @@ def min_length(start_point, end_point):
 
     def distance_eval(a, b):
         """Расчет дистанции между a & b в километрах"""
-        return Point.objects.get(id=a).geom.distance(Point.objects.get(id=b).geom) * 100
+        return point_model.objects.get(id=a).geom.distance(point_model.objects.get(id=b).geom) * 100
 
     def heuristic_eval(pos):
-        """Расчет эвристики конечная точка эвристики = конечная точка пути"""
-        return Point.objects.get(id=pos).geom.distance(Point.objects.get(id=end_point).geom) * 100
+        """Расчет эвристики. Конечная точка эвристики = конечная точка пути.
+        Функция сообщает, насколько мы в данный момент близки к цели"""
+        # расчет, в какую сторону стоит сделать следующий шаг?
+        return point_model.objects.get(id=pos).geom.distance(point_model.objects.get(id=end_point).geom) * 100
 
-    def path_in_km(path_list):
+    def path_length(path_list):
         """Функция, возвращающая общую длину пути по рассчитаным astar точкам"""
         distance = 0
         for i in range(len(path_list)):
-            if len(path[i:i + 2]) == 2:
+            if len(path_list[i:i + 2]) == 2:
                 section = path_list[i:i + 2]
                 distance += distance_eval(section[0], section[1])
         return distance
 
-    def astar(start_pos, neighbors, goal_point, start_g, cost, heuristic, limit=maxsize,
-              debug=None):
+    def a_star(start_pos, neighbors, goal_point, start_g, cost, heuristic, limit=maxsize):
         """Поиск кратчайшего пути от точки до цели.
+        Функция возвращает наиболее короткий маршрут от точки start_pos до целевой точки, включая стартовую позицию.
         Аргументы:
           start_pos      - Стартовая точка: int
           neighbors(pos) - Функция, возвращающая всех соседей точки (pos): function > returns list
           goal(pos)      - Функция, возвращающая True при достижении цели и False в противном случае
           start_g        - Начальная стоимость: float
           cost(a, b)     - Функция, возвращающая стоимость перехода из точки a в точку b: float
-          heuristic(pos) - A function returning an estimate of the total cost
-                           remaining for reaching goal from the given position.
-                           Overestimates can yield suboptimal paths.
+          heuristic(pos) - Функция, возвращающая остаточную стоимость достижения цели с текущей позиции
+                           Завышенные оценки могут привести к неоптимальным путям.
           limit          - Максимальное число позиций для поиска
-        Функция возвращает наиболее короткикй маршрут от точки start_pos до целевой точки, включая стартовую позицию.
         """
 
         # Создание стартового узла
@@ -85,7 +90,7 @@ def min_length(start_point, end_point):
                 neighbor = nodes.get(neighbor_pos)
                 if neighbor is None:
 
-                    # Limit the search.
+                    # Лимит поиска
                     if len(nodes) >= limit:
                         continue
 
@@ -104,10 +109,10 @@ def min_length(start_point, end_point):
                     # Мы нашли более выгодный путь к соседней точке
                     if neighbor[OPEN]:
 
-                        # The neighbor is already open. Finding and updating it
-                        # in the heap would be a linear complexity operation.
-                        # Instead we mark the neighbor as invalid and make an
-                        # updated copy of it.
+                        # Соседний узел уже раскрыт. Найти и обновить его в куче
+                        # было бы операцией линейной сложности.
+                        # Вместо этого мы помечаем соседа как VALID=False и
+                        # делаем его обновленную копию.
 
                         neighbor[VALID] = False
                         nodes[neighbor_pos] = neighbor = neighbor[:]
@@ -120,7 +125,7 @@ def min_length(start_point, end_point):
 
                     else:
 
-                        # Reopen the neighbor.
+                        # Открываем соседний узел заново (его копию)
                         neighbor[F] = neighbor_g + neighbor[H]
                         neighbor[G] = neighbor_g
                         neighbor[PARENT] = current[POS]
@@ -130,10 +135,6 @@ def min_length(start_point, end_point):
             # Discard leading invalid nodes from the heap.
             while heap and not heap[0][VALID]:
                 heappop(heap)
-
-        if debug is not None:
-            # Pass the dictionary of nodes to the caller.
-            debug(nodes)
 
         # Return the best path as a list.
         path = []
@@ -145,7 +146,8 @@ def min_length(start_point, end_point):
         path.reverse()
         return path
 
-    path = astar(start_point, open_neighbors, end_point, 0, distance_eval, heuristic_eval)
+    final_path = a_star(start_point, open_neighbors, end_point, 0, distance_eval, heuristic_eval)
     # geojson?
-    return f'Кратчайший путь от {start_point} до {end_point} проходит через ' \
-           f'точки: {path}, общая длина этого пути: {path_in_km(path)} км'
+    path_in_km = round(path_length(final_path), 2)
+    result = {'start_point': start_point, 'end_point': end_point, 'path': final_path, 'path_in_km': path_in_km}
+    return result

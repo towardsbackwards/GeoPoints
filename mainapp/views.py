@@ -16,14 +16,13 @@ class MinLength(APIView):
     def get(self, request, **kwargs):
         point_from = self.kwargs['from']
         point_to = self.kwargs['to']
-        result = min_length(point_from, point_to)
+        result = min_length(point_from, point_to, Line, Point)
         print(result)
-
         geojson_answer = json.loads(
-            serialize('geojson', Point.objects.filter(Q(id=self.kwargs['from']) | Q(id=self.kwargs['to'])),
+            serialize('geojson', Point.objects.filter(id__in=result['path']),
                       geometry_field='geom',
-                      fields=('score', 'geom')))
-        return Response({"points": geojson_answer, "result": result})
+                      fields=['pk', 'score', 'geom']))
+        return Response({"points": geojson_answer})
 
 
 class MinScore(APIView):
