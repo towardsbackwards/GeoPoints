@@ -8,7 +8,7 @@ from mainapp.models import Point, Line
 from mainapp.serializers import PointsSerializer
 from django.core.serializers import serialize
 
-from mainapp.algorithm import min_length
+from mainapp.algorithm import best_path_by
 
 
 class MinLength(APIView):
@@ -16,10 +16,12 @@ class MinLength(APIView):
     def get(self, request, **kwargs):
         point_from = self.kwargs['from']
         point_to = self.kwargs['to']
-        result = min_length(point_from, point_to, Line, Point)
-        print(result)
+        result_km = best_path_by(point_from, point_to, Line, Point)
+        result_score = best_path_by(point_from, point_to, Line, Point, eval_type='by_score')
+        print(result_km)
+        print(result_score)
         geojson_answer = json.loads(
-            serialize('geojson', Point.objects.filter(id__in=result['path']),
+            serialize('geojson', Point.objects.filter(id__in=result_km['path']),
                       geometry_field='geom',
                       fields=['pk', 'score', 'geom']))
         return Response({"points": geojson_answer})
