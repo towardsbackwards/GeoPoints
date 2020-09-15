@@ -75,8 +75,9 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
                            Завышенные оценки могут привести к неоптимальным путям.
           limit          - Максимальное число позиций для поиска
         """
+
         # Создание стартового узла
-        nums = iter(range(maxsize))  # обеспечиваем функцию "бесконечным" запасом шагов
+        nums = iter(range(maxsize))  # создание итератора для "бесконечного" осуществления следующего шага
         start_h = heuristic(start_pos)
         start_node = [start_cost + start_h, start_h, next(nums), start_cost, start_pos, True,
                       True, None]
@@ -99,11 +100,8 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
                 new_neighbor_g = current[G] + cost(current[POS], neighbor_pos)  # полная стоимость до neighbor_pos
                 neighbor = closed_nodes.get(neighbor_pos)  # берем соседа из списка просмотренных
                 if neighbor is None:  # если этот сосед ещё не был просмотрен
-                    # Лимит поиска
                     if len(closed_nodes) >= limit:
                         continue
-                    # Зашли в следующий по порядку соседний узел
-                    # присвоили ему значения и вставили в кучу просмотренных
                     neighbor_h = heuristic(neighbor_pos)
                     neighbor = [new_neighbor_g + neighbor_h, neighbor_h, next(nums),
                                 new_neighbor_g, neighbor_pos, True, True, current[POS]]
@@ -111,14 +109,8 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
                     heappush(open_heap, neighbor)
                     if neighbor_h < best[H]:
                         best = neighbor  # Эвристика нового узла меньше. Мы приближаемся к цели.
-                #  Если новая суммарная стоимость neighbor_pos меньше стоимости
-                elif new_neighbor_g < neighbor[G]:  # 1-2-10 < 1-9-10
-                    # Мы нашли более выгодный путь к соседней точке, чем просмотренный ранее
+                elif new_neighbor_g < neighbor[G]:
                     if neighbor[OPEN]:
-                        # Соседний узел уже раскрыт. Найти и обновить его в куче
-                        # было бы операцией линейной сложности.
-                        # Вместо этого мы помечаем соседа как VALID=False и
-                        # делаем его обновленную копию.
                         neighbor[VALID] = False
                         closed_nodes[neighbor_pos] = neighbor = neighbor[:]
                         neighbor[F] = new_neighbor_g + neighbor[H]
@@ -128,16 +120,13 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
                         neighbor[PARENT] = current[POS]
                         heappush(open_heap, neighbor)
                     else:
-                        # Открываем соседей узла заново (его копию)
                         neighbor[F] = new_neighbor_g + neighbor[H]
                         neighbor[G] = new_neighbor_g
                         neighbor[PARENT] = current[POS]
                         neighbor[OPEN] = True
                         heappush(open_heap, neighbor)
-            # Убираем из верхушки кучи узлы, помеченные невалидными
             while open_heap and not open_heap[0][VALID]:
                 heappop(open_heap)
-        # Возврат наилучшего пути в виде list
         path = []
         current = best
         while current[PARENT] is not None:
@@ -147,16 +136,16 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
         path.reverse()
         return path
 
-    final_path = a_star(start_point, open_neighbors, end_point, 0, distance_eval, heuristic_eval)
-    final_score_path = a_star(start_point, open_neighbors, end_point, 0, score_eval, heuristic_eval)
-    # geojson?
-    path_in_km = round(path_length(final_path), 2)
-    path_in_score_points = round(path_score(final_path), 2)
-    result_by_distance = {'start_point': start_point, 'end_point': end_point,
-                          'path': final_path, 'path_in_km': path_in_km}
-    result_by_score = {'start_point': start_point, 'end_point': end_point,
-                       'path': final_score_path, 'path_in_score_points': path_in_score_points}
-    if eval == 'by_distance':
+    if eval_type == 'by_distance':
+        final_path = a_star(start_point, open_neighbors, end_point, 0, distance_eval, heuristic_eval)
+        path_in_km = round(path_length(final_path), 2)
+        result_by_distance = {'start_point': start_point, 'end_point': end_point,
+                              'path': final_path, 'path_in_km': path_in_km}
         return result_by_distance
-    elif eval == 'by_score':
+
+    elif eval_type == 'by_score':
+        final_score_path = a_star(start_point, open_neighbors, end_point, 0, score_eval, heuristic_eval)
+        path_in_score_points = round(path_score(final_score_path), 2)
+        result_by_score = {'start_point': start_point, 'end_point': end_point,
+                           'path': final_score_path, 'path_in_score_points': path_in_score_points}
         return result_by_score
