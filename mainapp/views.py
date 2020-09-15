@@ -1,26 +1,22 @@
 import json
-
-from django.db.models import Q
-from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from mainapp.models import Point, Line
-from mainapp.serializers import PointsSerializer
 from django.core.serializers import serialize
 
 from mainapp.algorithm import best_path_by
 
 answer_blank = {"type": "FeatureCollection",
-          "features": [
-              {"type": "Feature",
-               "geometry": {
-                   "type": "LineString",
-               },
-               "properties": {
-               }
-               },
-          ]
-          }
+                "features": [
+                    {"type": "Feature",
+                     "geometry": {
+                         "type": "LineString",
+                     },
+                     "properties": {
+                     }
+                     },
+                ]
+                }
 
 
 class MinLength(APIView):
@@ -52,8 +48,9 @@ class MinScore(APIView):
 
 
 class PointsView(APIView):
+
     def get(self, request):
-        geojson_answer = serialize('geojson', Point.objects.all(),
-                                   geometry_field='geom',
-                                   fields=('score',))
+        geojson_answer = json.loads(serialize('geojson', Point.objects.all(),
+                                              geometry_field='geom',
+                                              fields=('score', 'pk')))
         return Response({"points": geojson_answer})

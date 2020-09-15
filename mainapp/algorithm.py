@@ -22,7 +22,6 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
                                                 by_score - по минимальному количеству баллов)"""
     depend_nodes = collections.defaultdict(list)
     for line in line_model.objects.all():
-        # формируем словарь узел (int) - связи (list)
         n_from = line.from_point.id
         n_to = line.to_point.id
         depend_nodes[n_from].append(n_to)
@@ -43,7 +42,6 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
     def heuristic_eval(pos):
         """Расчет эвристики. Конечная точка эвристики = конечная точка пути.
         Функция сообщает, насколько мы в данный момент близки к цели"""
-        # расчет, в какую сторону стоит сделать следующий шаг?
         return point_model.objects.get(id=pos).geom.distance(point_model.objects.get(id=end_point).geom) * 100
 
     def path_length(path_list):
@@ -75,31 +73,23 @@ def best_path_by(start_point, end_point, line_model, point_model, eval_type='by_
                            Завышенные оценки могут привести к неоптимальным путям.
           limit          - Максимальное число позиций для поиска
         """
-
-        # Создание стартового узла
-        nums = iter(range(maxsize))  # создание итератора для "бесконечного" осуществления следующего шага
+        nums = iter(range(maxsize))
         start_h = heuristic(start_pos)
         start_node = [start_cost + start_h, start_h, next(nums), start_cost, start_pos, True,
                       True, None]
-        # Отслеживание всех просмотренных узлов
         closed_nodes = {start_pos: start_node}
-        # Содержит кучу узлов
         open_heap = [start_node]
-        # Установка лучшего найденного пути
         best = start_node
-        # Пока в куче есть узлы
         while open_heap:
-            current = heappop(open_heap)  # ДОСТАЛИ УЗЕЛ С НАИМЕНЬШЕЙ СТОИМОСТЬЮ ИЗ ОТКРЫТЫХ
-            current[OPEN] = False  # УСТАНОВИЛИ, ЧТО УЗЕЛ ПРОСМОТРЕН
-            # КОНЕЦ, ЕСЛИ УЗЕЛ СОВПАДАЕТ С ФИНИШЕМ
+            current = heappop(open_heap)
+            current[OPEN] = False
             if current[POS] == goal_point:
                 best = current
                 break
-            # РАСКРЫВАЕМ СОСЕДНИЕ УЗЛЫ, КОТОРЫЕ НЕ ЯВЛЯЮТСЯ ЗАКРЫТЫМИ ([OPEN] = True)
             for neighbor_pos in neighbors(current[POS]):
-                new_neighbor_g = current[G] + cost(current[POS], neighbor_pos)  # полная стоимость до neighbor_pos
-                neighbor = closed_nodes.get(neighbor_pos)  # берем соседа из списка просмотренных
-                if neighbor is None:  # если этот сосед ещё не был просмотрен
+                new_neighbor_g = current[G] + cost(current[POS], neighbor_pos)
+                neighbor = closed_nodes.get(neighbor_pos)
+                if neighbor is None:
                     if len(closed_nodes) >= limit:
                         continue
                     neighbor_h = heuristic(neighbor_pos)
