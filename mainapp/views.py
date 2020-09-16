@@ -42,8 +42,8 @@ class MinScore(APIView):
         result_score = best_path_by(point_from, point_to, Line, Point, eval_type='by_score')
         print(result_score)
         geojson_coords = answer_blank['features'][0]['geometry']['score_points'] = []
-        for i in Point.objects.filter(id__in=result_score['path']):
-            geojson_coords.append([i.score])
+        for i in result_score['path']:
+            geojson_coords.append([Point.objects.get(id=i).score])
         answer_blank['features'][0]['properties']['name'] = 'Cheapest path'
         return Response({"answer": answer_blank})
 
