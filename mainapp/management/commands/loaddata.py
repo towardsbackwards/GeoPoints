@@ -3,6 +3,7 @@ from django.core.management import BaseCommand
 from django.db import transaction
 from django.contrib.gis.geos import Point as GeoPoint
 from GeoPoints.settings import JSON_LOCAL_PATH
+from mainapp.API import YA_GEOCODER_API_KEY
 from mainapp.models import Point, Line
 import json
 
@@ -22,6 +23,17 @@ def get_json(path):
         return None
 
 
+def get_address(long, lat):
+    """&geocode = <долгота, широта>"""
+    request = (requests.get(f'https://geocode-maps.yandex.ru/1.x/?format=json&apikey={YA_GEOCODER_API_KEY}'
+                            f'&geocode={long},{lat}')).json()
+    address = \
+        request['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty'][
+            'GeocoderMetaData'][
+            'text']
+    return address
+
+
 json_data = get_json(json_path)
 
 
@@ -35,7 +47,8 @@ class Command(BaseCommand):
                 new_point = Point(
                     pk=point['obj_id'],
                     geom=GeoPoint(point['lon'], point['lat']),
-                    score=point['score']
+                    score=point['score'],
+                    address=get_address(point['lon'], point['lat'])
                 )
                 new_point.save()
             for num, line in enumerate(json_data['lines']):

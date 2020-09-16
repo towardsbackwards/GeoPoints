@@ -21,17 +21,6 @@ answer_blank = {"type": "FeatureCollection",
                 }
 
 
-def get_address(point):
-    """&geocode = <долгота, широта>"""
-
-    long = Point.objects.get(id=point).geom.x
-    lat = Point.objects.get(id=point).geom.y
-    request = (requests.get(f'https://geocode-maps.yandex.ru/1.x/?format=json&apikey={YA_GEOCODER_API_KEY}'
-                           f'&geocode={long},{lat}')).json()
-    address = request['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty']['GeocoderMetaData']['text']
-    return address
-
-
 class MinLength(APIView):
 
     def get(self, request, **kwargs):
@@ -42,7 +31,6 @@ class MinLength(APIView):
         geojson_coords = answer_blank['features'][0]['geometry']['coordinates'] = []
         for i in Point.objects.filter(id__in=result_km['path']):
             geojson_coords.append([i.geom[0], i.geom[1]])
-            answer_blank['features'][0]['properties']['address'] = get_address(i.id)
         answer_blank['features'][0]['properties']['name'] = 'Shortest path'
 
         return Response({"answer": answer_blank})

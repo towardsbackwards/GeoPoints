@@ -4,6 +4,7 @@ from django.contrib.gis.db import models
 class Point(models.Model):
     geom = models.PointField(null=True)  # X is longitude and Y is latitude
     score = models.IntegerField(null=True)
+    address = models.TextField(max_length=1024, null=True, blank=True)
 
     def __str__(self):
         return f'{self.geom[0]} {self.geom[1]}, score {self.score}'
