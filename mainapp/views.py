@@ -27,8 +27,8 @@ class MinLength(APIView):
         result_km = best_path_by(point_from, point_to, Line, Point)
         print(result_km)
         geojson_coords = answer_blank['features'][0]['geometry']['coordinates'] = []
-        for i in Point.objects.filter(id__in=result_km['path']):
-            geojson_coords.append([i.geom[0], i.geom[1]])
+        for i in result_km['path']:
+            geojson_coords.append([Point.objects.get(id=i).geom[0], Point.objects.get(id=i).geom[1]])
         answer_blank['features'][0]['properties']['name'] = 'Shortest path'
 
         return Response({"answer": answer_blank})
