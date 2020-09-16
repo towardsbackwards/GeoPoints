@@ -24,7 +24,8 @@ def get_json(path):
 
 
 def get_address(long, lat):
-    """&geocode = <долгота, широта>"""
+    """Получение адреса по долготе и широте через Yandex GeoCoder API
+    &geocode = <долгота, широта>"""
     request = (requests.get(f'https://geocode-maps.yandex.ru/1.x/?format=json&apikey={YA_GEOCODER_API_KEY}'
                             f'&geocode={long},{lat}')).json()
     address = \

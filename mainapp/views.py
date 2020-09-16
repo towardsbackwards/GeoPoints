@@ -1,6 +1,4 @@
 import json
-import requests
-from .API import YA_GEOCODER_API_KEY
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from mainapp.models import Point, Line
